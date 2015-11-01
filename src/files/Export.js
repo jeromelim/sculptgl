@@ -7,6 +7,7 @@ define(function (require, exports, module) {
   var ExportPLY = require('files/ExportPLY');
   var ExportSTL = require('files/ExportSTL');
   var ExportSketchfab = require('files/ExportSketchfab');
+  var ExportMaterialise = require('files/ExportMaterialise');
 
   var Export = {};
   Export.exportOBJ = ExportOBJ.exportOBJ;
@@ -16,6 +17,7 @@ define(function (require, exports, module) {
   Export.exportAsciiSTL = ExportSTL.exportAsciiSTL;
   Export.exportBinarySTL = ExportSTL.exportBinarySTL;
   Export.exportSketchfab = ExportSketchfab.exportSketchfab;
+  Export.exportMaterialise = ExportMaterialise.exportMaterialise;
 
   module.exports = Export;
 });

@@ -16,7 +16,9 @@ define(function (require, exports, module) {
       data += 'o mesh_' + i + '\n';
       data = Export.addMesh(meshes[i], data, offsets, saveColor);
     }
-    return new Blob([data]);
+    return new Blob([data], {
+      type: 'application/octet-stream'
+    });
   };
   Export.addMesh = function (mesh, data, offsets, saveColor) {
     var vAr = mesh.getVertices();
@@ -38,7 +40,7 @@ define(function (require, exports, module) {
       data += 'v ' + ver[0] + ' ' + ver[1] + ' ' + ver[2];
       data += (saveColor ? ' ' + cAr[j] + ' ' + cAr[j + 1] + ' ' + cAr[j + 2] + '\n' : '\n');
     }
-    if (!saveColor) {
+    if (!saveColor && false) {
       // zbrush-like vertex color
       var nbChunck = Math.ceil(nbVertices / 64);
       for (i = 0; i < nbChunck; ++i) {

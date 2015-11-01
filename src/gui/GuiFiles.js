@@ -30,9 +30,13 @@ define(function (require, exports, module) {
       menu.addButton(TR('fileExportSGL'), this, 'saveFileAsSGL');
       menu.addButton(TR('fileExportOBJ'), this, 'saveFileAsOBJ' /*, 'CTRL+(Alt)+E'*/ );
       menu.addButton(TR('sketchfabTitle'), this, 'exportSketchfab');
+
       menu.addTitle(TR('fileExportMeshTitle'));
       menu.addButton(TR('fileExportPLY'), this, 'saveFileAsPLY');
       menu.addButton(TR('fileExportSTL'), this, 'saveFileAsSTL');
+
+      menu.addTitle(TR('3DprintTitle'));
+      menu.addButton(TR('exportMaterialise'), this, 'exportMaterialise');
     },
     addFile: function () {
       document.getElementById('fileopen').click();
@@ -70,11 +74,11 @@ define(function (require, exports, module) {
         return;
 
       var ctrlNotif = this._ctrlGui.getWidgetNotification();
-      if (this._sketchfabXhr && ctrlNotif.sketchfab === true) {
+      if (this._sketchfabXHR && ctrlNotif.sketchfab === true) {
         if (!window.confirm(TR('sketchfabAbort')))
           return;
         ctrlNotif.sketchfab = false;
-        this._sketchfabXhr.abort();
+        this._sketchfabXHR.abort();
       }
 
       var api = window.prompt(TR('sketchfabUploadMessage'), 'guest');
@@ -82,7 +86,22 @@ define(function (require, exports, module) {
         return;
 
       var key = api === 'guest' ? 'babc9a5cd4f343f9be0c7bd9cf93600c' : api;
-      this._sketchfabXhr = Export.exportSketchfab(this._main, key, ctrlNotif);
+      this._sketchfabXHR = Export.exportSketchfab(this._main, key, ctrlNotif);
+    },
+    exportMaterialise: function () {
+      var mesh = this._main.getMesh();
+      if (!mesh)
+        return;
+
+      var ctrlNotif = this._ctrlGui.getWidgetNotification();
+      if (this._materialiseXHR && ctrlNotif.materialise === true) {
+        if (!window.confirm(TR('materialiseAbort')))
+          return;
+        ctrlNotif.sketchfab = false;
+        this._materialiseXHR.abort();
+      }
+      var toolID = '20cc0fd6-3cef-4111-a201-0b87026d892c';
+      this._materialiseXHR = Export.exportMaterialise(this._main, toolID, ctrlNotif);
     },
     ////////////////
     // KEY EVENTS
