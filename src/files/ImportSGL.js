@@ -2,13 +2,26 @@ define(function (require, exports, module) {
 
   'use strict';
 
-  var Mesh = require('mesh/Mesh');
+  var Utils = require('misc/Utils');
+  var MeshStatic = require('mesh/MeshStatic/MeshStatic');
   var ExportSGL = require('files/ExportSGL');
   var ShaderBase = require('render/shaders/ShaderBase');
 
   var intToString = ExportSGL.intToString;
 
   var Import = {};
+
+  var handleNegativeIndexFace = function (i32) {
+    var u32 = new Uint32Array(i32);
+    var nbFaces = u32.length / 4;
+    for (var i = 0; i < nbFaces; ++i) {
+      var idd = i * 4 + 3;
+      if (i32[idd] < 0)
+        u32[idd] = Utils.TRI_INDEX;
+    }
+
+    return u32;
+  };
 
   // see ExportSGL for file description
   //
@@ -20,7 +33,7 @@ define(function (require, exports, module) {
 
     var off = 0;
     var version = u32a[off++];
-    if (version > 2)
+    if (version > ExportSGL.VERSION)
       return [];
 
     // camera stuffs
@@ -39,18 +52,18 @@ define(function (require, exports, module) {
     var nbMeshes = u32a[off++];
     var meshes = new Array(nbMeshes);
     for (var i = 0; i < nbMeshes; ++i) {
-      var mesh = meshes[i] = new Mesh(gl);
+      var mesh = meshes[i] = new MeshStatic(gl);
 
       // shader + matcap + wire + alpha + flat 
       if (version >= 2) {
-        var render = mesh.getRender();
+        var render = mesh.getRenderData();
         // we don't have the geometry buffer and data yet so
         // we don't want to call updateBuffers (so no call to )
         render._shaderName = intToString.INT_TO_SHADER[u32a[off++]];
-        render.setMatcap(u32a[off++]);
+        render._matcap = u32a[off++];
         render._showWireframe = u32a[off++];
         render._flatShading = u32a[off++];
-        render.setOpacity(f32a[off++]);
+        render._alpha = f32a[off++];
       }
 
       // center matrix and scale
@@ -79,7 +92,11 @@ define(function (require, exports, module) {
 
       // faces
       nbElts = u32a[off++];
-      mesh.setFaces(i32a.subarray(off, off + nbElts * 4));
+      if (version <= 2) {
+        mesh.setFaces(handleNegativeIndexFace(i32a.subarray(off, off + nbElts * 4)));
+      } else {
+        mesh.setFaces(u32a.subarray(off, off + nbElts * 4));
+      }
       off += nbElts * 4;
 
       // uvs
@@ -92,8 +109,13 @@ define(function (require, exports, module) {
       // face uvs
       nbElts = u32a[off++];
       var fuv = null;
-      if (nbElts)
-        fuv = i32a.subarray(off, off + nbElts * 4);
+      if (nbElts) {
+        if (version <= 2) {
+          fuv = handleNegativeIndexFace(i32a.subarray(off, off + nbElts * 4));
+        } else {
+          fuv = u32a.subarray(off, off + nbElts * 4);
+        }
+      }
       off += nbElts * 4;
 
       if (uv && fuv)
@@ -105,3 +127,4 @@ define(function (require, exports, module) {
 
   module.exports = Import;
 });
+

@@ -65,7 +65,7 @@ define(function (require, exports, module) {
       picking.pickVerticesInSphere(picking.getLocalRadius2());
       picking.computePickedNormal();
       // if dyn topo, we need to the picking and the sculpting altogether
-      if (mesh.getDynamicTopology)
+      if (mesh.isDynamic)
         this.stroke(picking, false);
 
       if (pickingSym) {
@@ -74,7 +74,7 @@ define(function (require, exports, module) {
         pickingSym.pickVerticesInSphere(pickingSym.getLocalRadius2());
       }
 
-      if (!mesh.getDynamicTopology) this.stroke(picking, false);
+      if (!mesh.isDynamic) this.stroke(picking, false);
       if (pickingSym) this.stroke(pickingSym, true);
       return true;
     },

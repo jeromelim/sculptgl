@@ -2,8 +2,8 @@ define(function (require, exports, module) {
 
   'use strict';
 
-  var Mesh = require('mesh/Mesh');
   var Utils = require('misc/Utils');
+  var MeshStatic = require('mesh/MeshStatic/MeshStatic');
 
   var Import = {};
 
@@ -290,7 +290,7 @@ define(function (require, exports, module) {
       fAr[idFace] = parseIndex(split[1]);
       fAr[idFace + 1] = parseIndex(split[2]);
       fAr[idFace + 2] = parseIndex(split[3]);
-      fAr[idFace + 3] = nbVert === 4 ? parseIndex(split[4]) : -1;
+      fAr[idFace + 3] = nbVert === 4 ? parseIndex(split[4]) : Utils.TRI_INDEX;
       idFace += 4;
     }
 
@@ -338,7 +338,7 @@ define(function (require, exports, module) {
         fAr[idf++] = readIndex(offsetCurrent);
         offsetCurrent += nbOctetIndex;
       } else {
-        fAr[idf++] = -1;
+        fAr[idf++] = Utils.TRI_INDEX;
       }
     }
 
@@ -348,7 +348,7 @@ define(function (require, exports, module) {
 
   var readElementIndex = function (element, infos) {
 
-    var fAr = infos.faces = new Int32Array(element.count * 4);
+    var fAr = infos.faces = new Uint32Array(element.count * 4);
     if (!infos.isBinary)
       readAsciiIndex(element, infos, fAr);
     else
@@ -403,7 +403,7 @@ define(function (require, exports, module) {
       }
     }
 
-    var mesh = new Mesh(gl);
+    var mesh = new MeshStatic(gl);
     mesh.setVertices(infos.vertices);
     mesh.setFaces(infos.faces);
     mesh.setColors(infos.colors);
@@ -412,3 +412,4 @@ define(function (require, exports, module) {
 
   module.exports = Import;
 });
+

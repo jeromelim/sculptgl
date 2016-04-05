@@ -17,7 +17,7 @@ define(function (require, exports, module) {
   var Multimesh = require('mesh/multiresolution/Multimesh');
   var Primitives = require('drawables/Primitives');
   var States = require('states/States');
-  var Render = require('mesh/Render');
+  var Render = require('mesh/RenderData');
   var Rtt = require('drawables/Rtt');
   var Shader = require('render/ShaderLib');
   var WebGLCaps = require('render/WebGLCaps');
@@ -410,7 +410,7 @@ define(function (require, exports, module) {
     computeBoundingBoxMeshes: function (meshes) {
       var bound = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
       for (var i = 0, l = meshes.length; i < l; ++i) {
-        var bi = meshes[i].getWorldBound();
+        var bi = meshes[i].computeWorldBound();
         if (bi[0] < bound[0]) bound[0] = bi[0];
         if (bi[1] < bound[1]) bound[1] = bi[1];
         if (bi[2] < bound[2]) bound[2] = bi[2];
@@ -582,3 +582,4 @@ define(function (require, exports, module) {
 
   module.exports = Scene;
 });
+

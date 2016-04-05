@@ -4,10 +4,9 @@ define(function (require, exports, module) {
 
   var TR = require('gui/GuiTR');
   var Remesh = require('editing/Remesh');
-  var Mesh = require('mesh/Mesh');
+  var MeshStatic = require('mesh/MeshStatic/MeshStatic');
   var Multimesh = require('mesh/multiresolution/Multimesh');
   var MeshDynamic = require('mesh/dynamic/MeshDynamic');
-  var Topology = require('mesh/dynamic/Topology');
   var StateMultiresolution = require('states/StateMultiresolution');
 
   var GuiMultiresolution = function (guiParent, ctrlGui) {
@@ -45,9 +44,9 @@ define(function (require, exports, module) {
       // dynamic
       menu.addTitle(TR('dynamicTitle'));
       this._ctrlDynamic = menu.addCheckbox(TR('dynamicActivated'), false, this.dynamicToggleActivate.bind(this));
-      this._ctrlDynSubd = menu.addSlider(TR('dynamicSubdivision'), Topology, 'subFactor', 0, 100, 1);
-      this._ctrlDynDec = menu.addSlider(TR('dynamicDecimation'), Topology, 'decFactor', 0, 100, 1);
-      this._ctrlDynLin = menu.addCheckbox(TR('dynamicLinear'), Topology, 'linear');
+      this._ctrlDynSubd = menu.addSlider(TR('dynamicSubdivision'), MeshDynamic, 'SUBDIVISION_FACTOR', 0, 100, 1);
+      this._ctrlDynDec = menu.addSlider(TR('dynamicDecimation'), MeshDynamic, 'DECIMATION_FACTOR', 0, 100, 1);
+      this._ctrlDynLin = menu.addCheckbox(TR('dynamicLinear'), MeshDynamic, 'LINEAR');
       this.updateDynamicVisibility(false);
     },
     updateDynamicVisibility: function (bool) {
@@ -61,8 +60,8 @@ define(function (require, exports, module) {
       if (!mesh)
         return;
 
-      var newMesh = !mesh.getDynamicTopology ? new MeshDynamic(mesh) : this.convertToStaticMesh(mesh);
-      this.updateDynamicVisibility(!mesh.getDynamicTopology);
+      var newMesh = !mesh.isDynamic ? new MeshDynamic(mesh) : this.convertToStaticMesh(mesh);
+      this.updateDynamicVisibility(!mesh.isDynamic);
 
       main.replaceMesh(mesh, newMesh);
       main.getStates().pushStateAddRemove(newMesh, mesh);
@@ -92,10 +91,11 @@ define(function (require, exports, module) {
       return !!(mesh && mesh._meshes);
     },
     convertToStaticMesh: function (mesh) {
-      if (!mesh.getDynamicTopology) // already static
+      if (!mesh.isDynamic) // already static
         return mesh;
+
       // dynamic to static mesh
-      var newMesh = new Mesh(mesh.getGL());
+      var newMesh = new MeshStatic(mesh.getGL());
       newMesh.setID(mesh.getID());
       newMesh.setTransformData(mesh.getTransformData());
       newMesh.setVertices(mesh.getVertices().subarray(0, mesh.getNbVertices() * 3));
@@ -103,8 +103,7 @@ define(function (require, exports, module) {
       newMesh.setMaterials(mesh.getMaterials().subarray(0, mesh.getNbVertices() * 3));
       newMesh.setFaces(mesh.getFaces().subarray(0, mesh.getNbFaces() * 4));
       newMesh.init();
-      newMesh.setRender(mesh.getRender());
-      mesh.getRender()._mesh = newMesh;
+      newMesh.setRenderData(mesh.getRenderData());
       newMesh.initRender();
       return newMesh;
     },
@@ -121,15 +120,15 @@ define(function (require, exports, module) {
       var mesh = main.getMesh();
       if (!mesh)
         return;
+
       var mul = this.convertToMultimesh(mesh);
       if (mul._sel !== mul._meshes.length - 1) {
         window.alert(TR('multiresSelectHighest'));
         return;
       }
+
       if (mul.getNbTriangles() > 400000) {
         if (!window.confirm(TR('multiresWarnBigMesh', mul.getNbFaces() * 4))) {
-          if (mesh !== mul)
-            mesh.getRender()._mesh = mesh;
           return;
         }
       }
@@ -138,6 +137,7 @@ define(function (require, exports, module) {
         main.replaceMesh(mesh, mul);
         main.getStates().pushStateAddRemove(mul, mesh, true);
       }
+
       main.getStates().pushState(new StateMultiresolution(main, mul, StateMultiresolution.SUBDIVISION));
       mul.addLevel();
       main.setMesh(mul);
@@ -149,16 +149,16 @@ define(function (require, exports, module) {
       var mesh = main.getMesh();
       if (!mesh)
         return;
+
       var mul = this.convertToMultimesh(mesh);
       if (mul._sel !== 0) {
         window.alert(TR('multiresSelectLowest'));
         return;
       }
+
       var stateRes = new StateMultiresolution(main, mul, StateMultiresolution.REVERSION);
       var newMesh = mul.computeReverse();
       if (!newMesh) {
-        if (mesh !== mul)
-          mesh.getRender()._mesh = mesh;
         window.alert(TR('multiresNotReversible'));
         return;
       }
@@ -167,6 +167,7 @@ define(function (require, exports, module) {
         main.replaceMesh(mesh, mul);
         main.getStates().pushStateAddRemove(mul, mesh, true);
       }
+
       main.getStates().pushState(stateRes);
       main.setMesh(mul);
       main.render();
@@ -238,7 +239,7 @@ define(function (require, exports, module) {
       }
       this._menu.setVisibility(true);
       this.updateMeshResolution();
-      var bool = this._main.getMesh().getDynamicTopology;
+      var bool = this._main.getMesh().isDynamic;
       this.updateDynamicVisibility(bool);
       this._ctrlDynamic.setValue(bool, true);
     }
@@ -246,3 +247,4 @@ define(function (require, exports, module) {
 
   module.exports = GuiMultiresolution;
 });
+

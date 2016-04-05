@@ -151,16 +151,16 @@ define(function (require, exports, module) {
   };
 
   var uIBLTmp = mat3.create();
-  ShaderPBR.updateUniforms = function (render, main) {
-    var gl = render.getGL();
+  ShaderPBR.updateUniforms = function (mesh, main) {
+    var gl = mesh.getGL();
     var uniforms = this.uniforms;
 
     mat3.fromMat4(uIBLTmp, main.getCamera().getView());
     gl.uniformMatrix3fv(uniforms.uIblTransform, false, mat3.transpose(uIBLTmp, uIBLTmp));
 
-    gl.uniform3fv(uniforms.uAlbedo, render.getAlbedo());
-    gl.uniform1f(uniforms.uRoughness, render.getRoughness());
-    gl.uniform1f(uniforms.uMetallic, render.getMetallic());
+    gl.uniform3fv(uniforms.uAlbedo, mesh.getAlbedo());
+    gl.uniform1f(uniforms.uRoughness, mesh.getRoughness());
+    gl.uniform1f(uniforms.uMetallic, mesh.getMetallic());
     gl.uniform1f(uniforms.uExposure, ShaderPBR.exposure);
 
     var env = ShaderPBR.environments[ShaderPBR.idEnv];
@@ -170,8 +170,9 @@ define(function (require, exports, module) {
     gl.bindTexture(gl.TEXTURE_2D, ShaderPBR.getOrCreateEnvironment(gl, main, env));
     gl.uniform1i(uniforms.uTexture0, 0);
 
-    ShaderBase.updateUniforms.call(this, render, main);
+    ShaderBase.updateUniforms.call(this, mesh, main);
   };
 
   module.exports = ShaderPBR;
 });
+

@@ -137,13 +137,11 @@ define(function (require, exports, module) {
   };
   ShaderBase.updateUniforms = (function () {
     var tmp = [0.0, 0.0, 0.0];
-    return function (render, main) {
-      var gl = render.getGL();
-      var mesh = render.getMesh();
+    return function (mesh, main) {
+      var gl = mesh.getGL();
 
-      var sels = main.getSelectedMeshes();
-      var darken = ShaderBase.darkenUnselected && sels.length !== 0 && sels.indexOf(mesh) === -1;
-      var useSym = ShaderBase.showSymmetryLine && (mesh === main.getMesh()) && main.getSculpt().getSymmetry();
+      var darken = ShaderBase.darkenUnselected && main.getIndexSelectMesh(mesh) < 0;
+      var useSym = ShaderBase.showSymmetryLine && (mesh.getID() === main.getMesh().getID()) && main.getSculpt().getSymmetry();
 
       var uniforms = this.uniforms;
 
@@ -165,20 +163,20 @@ define(function (require, exports, module) {
       gl.uniform1f(uniforms.uFov, cam.isOrthographic() ? -Math.abs(cam._trans[2]) * 25.0 : cam.getFov());
     };
   })();
-  ShaderBase.draw = function (render, main) {
-    var gl = render.getGL();
+  ShaderBase.draw = function (mesh, main) {
+    var gl = mesh.getGL();
     gl.useProgram(this.program);
-    this.bindAttributes(render);
-    this.updateUniforms(render, main);
-    this.drawBuffer(render);
+    this.bindAttributes(mesh);
+    this.updateUniforms(mesh, main);
+    this.drawBuffer(mesh);
   };
-  ShaderBase.drawBuffer = function (render) {
-    var gl = render.getGL();
-    if (render.isUsingDrawArrays()) {
-      gl.drawArrays(render.getMode(), 0, render.getCount());
+  ShaderBase.drawBuffer = function (mesh) {
+    var gl = mesh.getGL();
+    if (mesh.isUsingDrawArrays()) {
+      gl.drawArrays(mesh.getMode(), 0, mesh.getCount());
     } else {
-      render.getIndexBuffer().bind();
-      gl.drawElements(render.getMode(), render.getCount(), gl.UNSIGNED_INT, 0);
+      mesh.getIndexBuffer().bind();
+      gl.drawElements(mesh.getMode(), mesh.getCount(), gl.UNSIGNED_INT, 0);
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
@@ -222,13 +220,13 @@ define(function (require, exports, module) {
     attrs.aColor = new Attribute(gl, program, 'aColor', 3, gl.FLOAT);
     attrs.aMaterial = new Attribute(gl, program, 'aMaterial', 3, gl.FLOAT);
   };
-  ShaderBase.bindAttributes = function (render) {
+  ShaderBase.bindAttributes = function (mesh) {
     var attrs = this.attributes;
     var active = this.activeAttributes;
-    if (active.vertex) attrs.aVertex.bindToBuffer(render.getVertexBuffer());
-    if (active.normal) attrs.aNormal.bindToBuffer(render.getNormalBuffer());
-    if (active.color) attrs.aColor.bindToBuffer(render.getColorBuffer());
-    if (active.material) attrs.aMaterial.bindToBuffer(render.getMaterialBuffer());
+    if (active.vertex) attrs.aVertex.bindToBuffer(mesh.getVertexBuffer());
+    if (active.normal) attrs.aNormal.bindToBuffer(mesh.getNormalBuffer());
+    if (active.color) attrs.aColor.bindToBuffer(mesh.getColorBuffer());
+    if (active.material) attrs.aMaterial.bindToBuffer(mesh.getMaterialBuffer());
   };
 
   ShaderBase.getCopy = function () {
@@ -242,3 +240,4 @@ define(function (require, exports, module) {
 
   module.exports = ShaderBase;
 });
+

@@ -58,7 +58,7 @@ define(function (require, exports, module) {
     },
     end: function () {
       if (this.getMesh())
-        this.getMesh().checkLeavesUpdate();
+        this.getMesh().balanceOctree();
     },
     pushState: function () {
       this._states.pushStateGeometry(this.getMesh());
@@ -94,7 +94,7 @@ define(function (require, exports, module) {
     updateSculptLock: function (continuous) {
       var main = this._main;
       if (!continuous)
-        this._states.getCurrentState().undo(); // I can't believe it actually worked
+        this._states.getCurrentState().undo(); // tricky
 
       var picking = main.getPicking();
       var origRad = this._radius;
@@ -157,7 +157,7 @@ define(function (require, exports, module) {
         picking.computePickedNormal();
       }
       // if dyn topo, we need to the picking and the sculpting altogether
-      var dynTopo = mesh.getDynamicTopology && !this._lockPosition;
+      var dynTopo = mesh.isDynamic && !this._lockPosition;
       if (dynTopo && pick1)
         this.stroke(picking, false);
 
@@ -178,7 +178,7 @@ define(function (require, exports, module) {
     },
     updateMeshBuffers: function () {
       var mesh = this.getMesh();
-      if (mesh.getDynamicTopology)
+      if (mesh.isDynamic)
         mesh.updateBuffers();
       else
         mesh.updateGeometryBuffers();
@@ -330,17 +330,17 @@ define(function (require, exports, module) {
     dynamicTopology: function (picking) {
       var mesh = this.getMesh();
       var iVerts = picking.getPickedVertices();
-      if (!mesh.getDynamicTopology)
+      if (!mesh.isDynamic)
         return iVerts;
+
       if (iVerts.length === 0) {
         iVerts = mesh.getVerticesFromFaces([picking.getPickedFace()]);
         // undo-redo
         this._states.pushVertices(iVerts);
       }
 
-      var topo = mesh.getDynamicTopology();
-      var subFactor = topo.getSubdivisionFactor();
-      var decFactor = topo.getDecimationFactor();
+      var subFactor = mesh.getSubdivisionFactor();
+      var decFactor = mesh.getDecimationFactor();
       if (subFactor === 0.0 && decFactor === 0.0)
         return iVerts;
 
@@ -354,9 +354,9 @@ define(function (require, exports, module) {
       this._states.pushFaces(iFaces);
 
       if (subFactor)
-        iFaces = topo.subdivision(iFaces, center, radius2, d2Max, this._states);
+        iFaces = mesh.subdivide(iFaces, center, radius2, d2Max, this._states);
       if (decFactor)
-        iFaces = topo.decimation(iFaces, center, radius2, d2Min, this._states);
+        iFaces = mesh.decimate(iFaces, center, radius2, d2Min, this._states);
       iVerts = mesh.getVerticesFromFaces(iFaces);
 
       var nbVerts = iVerts.length;
@@ -369,6 +369,7 @@ define(function (require, exports, module) {
         if (vscf[iVert] === sculptFlag)
           iVertsInRadius[acc++] = iVert;
       }
+
       iVertsInRadius = new Uint32Array(iVertsInRadius.subarray(0, acc));
       mesh.updateTopology(iFaces);
       mesh.updateGeometry(iFaces, iVertsInRadius);
@@ -404,3 +405,4 @@ define(function (require, exports, module) {
 
   module.exports = SculptBase;
 });
+

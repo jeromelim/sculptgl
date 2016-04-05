@@ -3,7 +3,7 @@ define(function (require, exports, module) {
   'use strict';
 
   var TR = require('gui/GuiTR');
-  var Render = require('mesh/Render');
+  var RenderData = require('mesh/RenderData');
   var Shader = require('render/ShaderLib');
   var getOptionsURL = require('misc/getOptionsURL');
 
@@ -76,7 +76,7 @@ define(function (require, exports, module) {
 
       // wireframe
       this._ctrlShowWireframe = menu.addCheckbox(TR('renderingWireframe'), false, this.onShowWireframe.bind(this));
-      if (Render.ONLY_DRAW_ARRAYS)
+      if (RenderData.ONLY_DRAW_ARRAYS)
         this._ctrlShowWireframe.setVisibility(false);
 
       this.addEvents();
@@ -257,3 +257,4 @@ define(function (require, exports, module) {
 
   module.exports = GuiRendering;
 });
+

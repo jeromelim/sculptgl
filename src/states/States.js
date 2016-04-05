@@ -37,13 +37,13 @@ define(function (require, exports, module) {
       this.pushState(new StAddRemove(this._main, addMesh, []));
     },
     pushStateColorAndMaterial: function (mesh) {
-      if (mesh.getDynamicTopology)
+      if (mesh.isDynamic)
         this.pushState(new StDynamic(this._main, mesh));
       else
         this.pushState(new StColorAndMaterial(this._main, mesh));
     },
     pushStateGeometry: function (mesh) {
-      if (mesh.getDynamicTopology)
+      if (mesh.isDynamic)
         this.pushState(new StDynamic(this._main, mesh));
       else
         this.pushState(new StGeometry(this._main, mesh));
@@ -125,8 +125,9 @@ define(function (require, exports, module) {
         this._curUndoIndex--;
         this._redos.length = 0;
       }
-    },
+    }
   };
 
   module.exports = States;
 });
+

@@ -9,6 +9,8 @@ define(function (require, exports, module) {
   Utils.SCULPT_FLAG = 1; // flag value for sculpt (always >= tags values)
   Utils.STATE_FLAG = 1; // flag value for states (always >= tags values)
 
+  Utils.TRI_INDEX = 4294967295; // just a big integer to flag invalid positive index
+
   Utils.cursors = {};
   Utils.cursors.dropper = 'url(resources/dropper.png) 5 25, auto';
 
@@ -236,3 +238,4 @@ define(function (require, exports, module) {
 
   module.exports = Utils;
 });
+

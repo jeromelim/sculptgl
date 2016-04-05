@@ -25,7 +25,7 @@ define(function (require, exports, module) {
 
     this._pickedNormal = [0.0, 0.0, 0.0];
     // alpha stuffs
-    this._alphaOrirign = [0.0, 0.0, 0.0];
+    this._alphaOrigin = [0.0, 0.0, 0.0];
     this._alphaSide = 0.0;
     this._alphaLookAt = mat4.create();
     this._alpha = null;
@@ -40,7 +40,7 @@ define(function (require, exports, module) {
   Picking.ALPHAS_NAMES[none] = none;
 
   Picking.ALPHAS = {};
-  Picking.ALPHAS[Picking.ALPHAS_NAMES] = null;
+  Picking.ALPHAS[none] = null;
 
   Picking.addAlpha = function (u8, width, height, name) {
     var newAlpha = {};
@@ -88,7 +88,7 @@ define(function (require, exports, module) {
         var radius = Math.sqrt(this._rLocal2);
         this._alphaSide = radius * Math.SQRT1_2;
 
-        vec3.sub(dir, this._interPoint, this._alphaOrirign);
+        vec3.sub(dir, this._interPoint, this._alphaOrigin);
         if (vec3.len(dir) === 0) return;
         vec3.normalize(dir, dir);
 
@@ -97,10 +97,10 @@ define(function (require, exports, module) {
         vec3.normalize(dir, dir);
 
         if (!keepOrigin)
-          vec3.copy(this._alphaOrirign, this._interPoint);
+          vec3.copy(this._alphaOrigin, this._interPoint);
 
-        vec3.scaleAndAdd(nor, this._alphaOrirign, normal, radius);
-        mat4.lookAt(this._alphaLookAt, this._alphaOrirign, nor, dir);
+        vec3.scaleAndAdd(nor, this._alphaOrigin, normal, radius);
+        mat4.lookAt(this._alphaLookAt, this._alphaOrigin, nor, dir);
       };
     })(),
     initAlpha: function () {
@@ -231,7 +231,7 @@ define(function (require, exports, module) {
         var eyeDir = this.getEyeDirection();
         vec3.sub(eyeDir, vFar, vNear);
         vec3.normalize(eyeDir, eyeDir);
-        var iFacesCandidates = mesh.intersectRay(vNear, eyeDir, mesh.getNbFaces());
+        var iFacesCandidates = mesh.intersectRay(vNear, eyeDir);
         var distance = Infinity;
         var nbFacesCandidates = iFacesCandidates.length;
         for (var i = 0; i < nbFacesCandidates; ++i) {
@@ -250,8 +250,9 @@ define(function (require, exports, module) {
           v3[2] = vAr[ind3 + 2];
           var hitDist = Geometry.intersectionRayTriangle(vNear, eyeDir, v1, v2, v3, vertInter);
           if (hitDist < 0.0) {
-            ind2 = fAr[indFace + 3] * 3;
-            if (ind2 >= 0) {
+            ind2 = fAr[indFace + 3];
+            if (ind2 !== Utils.TRI_INDEX) {
+              ind2 *= 3;
               v2[0] = vAr[ind2];
               v2[1] = vAr[ind2 + 1];
               v2[2] = vAr[ind2 + 2];
@@ -278,15 +279,14 @@ define(function (require, exports, module) {
       var mesh = this._mesh;
       var vAr = mesh.getVertices();
       var vertSculptFlags = mesh.getVerticesSculptFlags();
-      var leavesHit = mesh.getLeavesUpdate();
       var inter = this.getIntersectionPoint();
 
-      var iFacesInCells = mesh.intersectSphere(inter, rLocal2, leavesHit, mesh.getNbFaces());
+      var iFacesInCells = mesh.intersectSphere(inter, rLocal2, true);
       var iVerts = mesh.getVerticesFromFaces(iFacesInCells);
       var nbVerts = iVerts.length;
 
       var sculptFlag = ++Utils.SCULPT_FLAG;
-      var pickedVertices = new Uint32Array(Utils.getMemory(4 * nbVerts + 12), 0, nbVerts + 3);
+      var pickedVertices = new Uint32Array(Utils.getMemory(4 * nbVerts), 0, nbVerts);
       var acc = 0;
       var itx = inter[0];
       var ity = inter[1];
@@ -396,22 +396,26 @@ define(function (require, exports, module) {
       var iv1 = fAr[id] * 3;
       var iv2 = fAr[id + 1] * 3;
       var iv3 = fAr[id + 2] * 3;
-      var iv4 = fAr[id + 3] * 3;
+
+      var iv4 = fAr[id + 3];
+      var isQuad = iv4 !== Utils.TRI_INDEX;
+      if (isQuad) iv4 *= 3;
 
       var len1 = 1.0 / vec3.dist(this._interPoint, vAr.subarray(iv1, iv1 + 3));
       var len2 = 1.0 / vec3.dist(this._interPoint, vAr.subarray(iv2, iv2 + 3));
       var len3 = 1.0 / vec3.dist(this._interPoint, vAr.subarray(iv3, iv3 + 3));
-      var len4 = iv4 >= 0 ? 1.0 / vec3.dist(this._interPoint, vAr.subarray(iv4, iv4 + 3)) : 0.0;
+      var len4 = isQuad ? 1.0 / vec3.dist(this._interPoint, vAr.subarray(iv4, iv4 + 3)) : 0.0;
 
       var invSum = 1.0 / (len1 + len2 + len3 + len4);
       vec3.set(out, 0.0, 0.0, 0.0);
       vec3.scaleAndAdd(out, out, vField.subarray(iv1, iv1 + 3), len1 * invSum);
       vec3.scaleAndAdd(out, out, vField.subarray(iv2, iv2 + 3), len2 * invSum);
       vec3.scaleAndAdd(out, out, vField.subarray(iv3, iv3 + 3), len3 * invSum);
-      if (iv4 >= 0) vec3.scaleAndAdd(out, out, vField.subarray(iv4, iv4 + 3), len4 * invSum);
+      if (isQuad) vec3.scaleAndAdd(out, out, vField.subarray(iv4, iv4 + 3), len4 * invSum);
       return out;
     }
   };
 
   module.exports = Picking;
 });
+

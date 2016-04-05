@@ -298,7 +298,7 @@ define(function (require, exports, module) {
       return vec3.transformMat3(pos, pos, mat3.transpose(rot, rot));
     },
     resetView: function () {
-      this._speed = Utils.SCALE * 0.9;
+      this._speed = Utils.SCALE * 1.5;
       this.centerDelay([0.0, 0.0, 0.0], DELAY_MOVE_TO);
       this.offsetDelay([0.0, 0.0, 0.0], DELAY_MOVE_TO);
       var delta = [0.0, 0.0, 30.0 + this._speed / 3.0];

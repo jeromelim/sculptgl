@@ -39,7 +39,13 @@ define(function (require, exports, module) {
   Export.intToString = intToString;
   Export.stringToInt = stringToInt;
 
-  // current version 2
+  // versions
+  // 1 initial
+  // 2 + camera,shader, matcap, wire, alpha, flat 
+  // 3 faces u32 instead of i32
+  Export.VERSION = 3;
+
+  // current version 3
   //
   // Version (u32)
 
@@ -74,13 +80,13 @@ define(function (require, exports, module) {
   // materials (f32 * 3 * nbVertices)
 
   // NbFaces (u32)
-  // faces (i32 * 4 * nbFaces)
+  // faces (u32 * 4 * nbFaces)
 
   // NbTexCoords (u32) => 0 means no UV
   // texcoords (f32 * 2 * nbTexCoords)
 
   // NbFacesTexCoords (u32) => 0 or nbFaces
-  // faces (i32 * 4 * nbFaces)
+  // faces (u32 * 4 * nbFaces)
   //
   /** Export SGL (sculptgl) file */
 
@@ -111,9 +117,8 @@ define(function (require, exports, module) {
     var buffer = new ArrayBuffer(nbBytes);
     var f32a = new Float32Array(buffer);
     var u32a = new Uint32Array(buffer);
-    var i32a = new Int32Array(buffer);
     var off = 0;
-    u32a[off++] = 2;
+    u32a[off++] = Export.VERSION;
 
     // misc stuffs
     u32a[off++] = main._showGrid;
@@ -149,7 +154,7 @@ define(function (require, exports, module) {
       // vertices
       var nbVertices = mesh.getNbVertices();
       u32a[off++] = nbVertices;
-      f32a.set(mesh.getVertices(), off);
+      f32a.set(mesh.getVertices().subarray(0, nbVertices * 3), off);
       off += nbVertices * 3;
 
       // colors
@@ -169,7 +174,7 @@ define(function (require, exports, module) {
       // faces
       var nbFaces = mesh.getNbFaces();
       u32a[off++] = nbFaces;
-      i32a.set(mesh.getFaces().subarray(0, nbFaces * 4), off);
+      u32a.set(mesh.getFaces().subarray(0, nbFaces * 4), off);
       off += nbFaces * 4;
 
       var hasUV = mesh.hasUV();
@@ -184,7 +189,7 @@ define(function (require, exports, module) {
       // face uvs
       u32a[off++] = hasUV ? nbFaces : 0;
       if (hasUV) {
-        i32a.set(mesh.getFacesTexCoord().subarray(0, nbFaces * 4), off);
+        u32a.set(mesh.getFacesTexCoord().subarray(0, nbFaces * 4), off);
         off += nbFaces * 4;
       }
     }
@@ -198,3 +203,4 @@ define(function (require, exports, module) {
 
   module.exports = Export;
 });
+

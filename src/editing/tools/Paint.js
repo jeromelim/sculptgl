@@ -50,7 +50,7 @@ define(function (require, exports, module) {
     },
     updateMeshBuffers: function () {
       var mesh = this.getMesh();
-      if (mesh.getDynamicTopology) {
+      if (mesh.isDynamic) {
         mesh.updateBuffers();
       } else {
         mesh.updateColorBuffer();
